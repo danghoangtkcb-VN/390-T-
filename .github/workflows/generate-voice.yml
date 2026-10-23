@@ -1,0 +1,36 @@
+name: Tao giong nam mien Bac
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: generate-northern-voice
+  cancel-in-progress: false
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tao MP3
+        env:
+          FPT_API_KEY: ${{ secrets.FPT_API_KEY }}
+        run: python3 scripts/generate_audio.py
+      - name: Luu ban ghi de tai ve hoac khoi phuc
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: giong-nam-mien-bac
+          path: audio/
+          if-no-files-found: ignore
+      - name: Cap nhat am thanh len GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/
+          git diff --cached --quiet && exit 0
+          git commit -m "Add northern male Vietnamese recordings"
+          git push
